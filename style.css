@@ -233,6 +233,10 @@ body {
   box-shadow: 0 0 20px var(--gold-glow);
 }
 
+.btn-text-mobile {
+  display: none;
+}
+
 .chevron-gold {
   color: inherit;
   font-weight: bold;
@@ -1589,15 +1593,35 @@ body {
     letter-spacing: 0.16em;
   }
 
+  .btn-text-full {
+    display: none;
+  }
+
+  .btn-text-mobile {
+    display: inline;
+  }
+
+  .nav-action {
+    gap: 8px;
+  }
+
   .btn-register-top {
-    padding: 6px 10px;
-    font-size: 11px;
+    padding: 5px 9px;
+    height: 28px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
     gap: 4px;
+    line-height: 1;
+    border-radius: 2px;
   }
 
   .btn-register-top span {
     font-size: 10px;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
+  }
+
+  .btn-register-top .chevron-gold {
+    font-size: 9px;
   }
 
   .menu-toggle {
@@ -1885,13 +1909,25 @@ body {
     letter-spacing: 0.14em;
   }
 
+  .nav-action {
+    gap: 6px;
+  }
+
   .btn-register-top {
-    padding: 5px 8px;
-    font-size: 10px;
+    padding: 4px 7px;
+    height: 25px;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    gap: 3px;
   }
 
   .btn-register-top span {
     font-size: 9px;
+    letter-spacing: 0.06em;
+  }
+
+  .btn-register-top .chevron-gold {
+    font-size: 8px;
   }
 
   .bar-title {
