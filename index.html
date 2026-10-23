@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,600&family=Exo+2:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Teko:wght@600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 
@@ -61,6 +61,7 @@
           autoplay 
           loop 
           playsinline 
+          webkit-playsinline
           preload="auto">
           <source src="hero%20section/hero%20video.mp4" type="video/mp4">
           <source src="hero section/hero video.mp4" type="video/mp4">
@@ -98,6 +99,7 @@
         <h2 class="bar-title">THE GAMES</h2>
       </div>
       <div class="bar-right">
+        <span class="swipe-hint" aria-hidden="true">SWIPE ⟷</span>
         <span class="bar-subtitle">CHOOSE YOUR BATTLE</span>
         <span class="slash-gold-double">//</span>
       </div>
@@ -469,7 +471,7 @@
     <div class="modal-box">
       <!-- Background Video Layer -->
       <div class="modal-video-wrapper">
-        <video id="modalVideo" class="modal-video-player" playsinline loop preload="auto"></video>
+        <video id="modalVideo" class="modal-video-player" playsinline webkit-playsinline loop preload="auto"></video>
         <div id="modalPoster" class="modal-poster-fallback"></div>
         <div class="modal-video-overlay"></div>
       </div>
@@ -489,6 +491,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
