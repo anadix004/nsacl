@@ -6,14 +6,107 @@
 let userManuallyMutedHero = false;
 let heroMutedBeforeModal = false;
 let updateHeroAudioUI = null;
+let startHeroVideoPlayback = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+  initPreloader();
   initHeroVideo();
   initMobileMenu();
   initNavScrollSpy();
   initModalHandlers();
   initModalAudioToggle();
 });
+
+/* =============================================================
+   0. MISSION CONTROL PRELOADER & ASSET BUFFERING
+   ============================================================= */
+
+function initPreloader() {
+  const preloader = document.getElementById('preloader');
+
+  if (!preloader) return;
+
+  const manifest = [
+    { id: 'hero', type: 'video', url: 'hero%20section/hero%20video.mp4' },
+    { id: 'fifa', type: 'video', url: 'game%20card%20/fifa.mp4' },
+    { id: 'tekken', type: 'video', url: 'game%20card%20/tekken.mp4' },
+    { id: 'mk', type: 'video', url: 'game%20card%20/mortal%20kombat.mp4' },
+    { id: 'bgmi', type: 'video', url: 'game%20card%20/bgmi.mp4' },
+    { id: 'cod', type: 'video', url: 'game%20card%20/cod.mp4' },
+    { id: 'freefire', type: 'video', url: 'game%20card%20/free%20fire.mp4' },
+    { id: 'logo', type: 'image', url: 'assets/space_apps_logo.png' },
+    { id: 'img_fifa', type: 'image', url: 'assets/card_fifa.jpg' },
+    { id: 'img_tekken', type: 'image', url: 'assets/card_tekken.jpg' },
+    { id: 'img_mk', type: 'image', url: 'assets/card_mk.jpg' },
+    { id: 'img_bgmi', type: 'image', url: 'assets/card_bgmi.jpg' },
+    { id: 'img_cod', type: 'image', url: 'assets/card_cod.jpg' },
+    { id: 'img_freefire', type: 'image', url: 'assets/card_freefire.jpg' }
+  ];
+
+  let loadedCount = 0;
+  const total = manifest.length;
+  let isDone = false;
+  const startTime = Date.now();
+  const minDisplayTime = 1600;
+
+  function completePreloader() {
+    if (isDone) return;
+    isDone = true;
+
+    const elapsed = Date.now() - startTime;
+    const remainingWait = Math.max(0, minDisplayTime - elapsed);
+
+    setTimeout(() => {
+      preloader.classList.add('fade-out');
+      setTimeout(() => {
+        preloader.style.display = 'none';
+      }, 700);
+
+      // Trigger hero video playback now that arena is revealed
+      if (typeof startHeroVideoPlayback === 'function') {
+        startHeroVideoPlayback();
+      }
+    }, remainingWait);
+  }
+
+  // Safety fallback timeout (12s max)
+  setTimeout(() => {
+    if (!isDone) completePreloader();
+  }, 12000);
+
+  // Preload all manifest items concurrently
+  manifest.forEach(async (item) => {
+    try {
+      if (item.type === 'video') {
+        const res = await fetch(item.url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        if (gameIntel[item.id]) {
+          gameIntel[item.id].blobUrl = blobUrl;
+        } else if (item.id === 'hero') {
+          window.heroBlobUrl = blobUrl;
+          const hero = document.getElementById('heroVideo');
+          if (hero) hero.src = blobUrl;
+        }
+      } else if (item.type === 'image') {
+        await new Promise((resolve) => {
+          const img = new Image();
+          img.onload = resolve;
+          img.onerror = resolve;
+          img.src = item.url;
+        });
+      }
+    } catch (err) {
+      console.warn('Preload fallback for ' + item.url, err);
+    } finally {
+      loadedCount++;
+      if (loadedCount >= total && !isDone) {
+        completePreloader();
+      }
+    }
+  });
+}
 
 /* =============================================================
    1. MOBILE MENU TOGGLE
@@ -216,7 +309,7 @@ function openGameModal(gameKey) {
     }
     if (data.video) {
       modalVideo.style.display = 'block';
-      modalVideo.src = data.video;
+      modalVideo.src = data.blobUrl || data.video;
       modalVideo.loop = true;
       modalVideo.currentTime = 0;
       modalVideo.muted = false; // Opens up with audio
@@ -485,37 +578,47 @@ function initHeroVideo() {
   video.volume = 0.85;
   video.muted = false;
 
-  // Attempt unmuted autoplay directly
-  const playPromise = video.play();
-
-  if (playPromise !== undefined) {
-    playPromise.then(() => {
-      // Unmuted autoplay succeeded
-      updateHeroAudioUI(false);
-    }).catch(() => {
-      // Browser blocked unmuted autoplay: start playing muted so video runs smoothly from starting
-      video.muted = true;
-      video.currentTime = 0;
+  // Unmute on the very first user interaction anywhere on the document
+  const unmuteOnFirstGesture = () => {
+    if (!userManuallyMutedHero) {
+      video.muted = false;
+      video.volume = 0.85;
       video.play().catch(() => {});
-      updateHeroAudioUI(false); // Display unmuted state as intended
-
-      // On first interaction anywhere, unmute audio immediately unless user manually muted
-      const unmuteOnFirstGesture = () => {
-        if (!userManuallyMutedHero) {
-          video.muted = false;
-          video.volume = 0.85;
-          video.play().catch(() => {});
-          updateHeroAudioUI(false);
-        }
-        ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
-          window.removeEventListener(evt, unmuteOnFirstGesture, true);
-        });
-      };
-
-      ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
-        window.addEventListener(evt, unmuteOnFirstGesture, { once: true, capture: true });
-      });
+      updateHeroAudioUI(false);
+    }
+    ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+      window.removeEventListener(evt, unmuteOnFirstGesture, true);
     });
+  };
+
+  ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+    window.addEventListener(evt, unmuteOnFirstGesture, { once: true, capture: true });
+  });
+
+  // Playback triggered right when preloader completes
+  startHeroVideoPlayback = function() {
+    if (window.heroBlobUrl && video) {
+      video.src = window.heroBlobUrl;
+    }
+    video.currentTime = 0;
+    const playPromise = video.play();
+
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        updateHeroAudioUI(false);
+      }).catch(() => {
+        video.muted = true;
+        video.currentTime = 0;
+        video.play().catch(() => {});
+        updateHeroAudioUI(false);
+      });
+    }
+  };
+
+  // If preloader is absent or already dismissed, start playback directly
+  const preloaderEl = document.getElementById('preloader');
+  if (!preloaderEl || preloaderEl.style.display === 'none') {
+    startHeroVideoPlayback();
   }
 
   // Audio button toggle: only switch off when user manually chooses
